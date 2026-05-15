@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum CandleInterval {
+  ONE_HOUR
+  FOUR_HOUR
+  ONE_DAY
+}
+
+enum MarketRankType {
+  MARKET_CAP
+  TRADE_VOLUME
+  MANUAL
+}
+
+enum SyncJobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+model Market {
+  id          BigInt         @id @default(autoincrement())
+  market      String         @unique
+  koreanName  String         @map("korean_name")
+  englishName String         @map("english_name")
+  rank        Int?
+  rankType    MarketRankType @default(TRADE_VOLUME) @map("rank_type")
+  isActive    Boolean        @default(true) @map("is_active")
+  createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  candles Candle[]
+  syncJobs CandleSyncJob[]
+
+  @@map("markets")
+}
+
+model Candle {
+  id        BigInt         @id @default(autoincrement())
+  market    String
+  interval  CandleInterval
+  timestamp DateTime       @db.Timestamptz(6)
+  open      Decimal        @db.Decimal(28, 10)
+  high      Decimal        @db.Decimal(28, 10)
+  low       Decimal        @db.Decimal(28, 10)
+  close     Decimal        @db.Decimal(28, 10)
+  volume    Decimal        @db.Decimal(28, 10)
+  source    String         @default("upbit")
+  fetchedAt DateTime       @default(now()) @map("fetched_at") @db.Timestamptz(6)
+  createdAt DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  marketRef Market @relation(fields: [market], references: [market], onDelete: Cascade)
+
+  @@unique([market, interval, timestamp])
+  @@index([market, interval, timestamp])
+  @@map("candles")
+}
+
+model CandleSyncJob {
+  id           BigInt         @id @default(autoincrement())
+  market       String
+  interval     CandleInterval
+  status       SyncJobStatus  @default(PENDING)
+  startedAt    DateTime?      @map("started_at") @db.Timestamptz(6)
+  finishedAt   DateTime?      @map("finished_at") @db.Timestamptz(6)
+  lastSyncedAt DateTime?      @map("last_synced_at") @db.Timestamptz(6)
+  errorMessage String?        @map("error_message")
+  createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  marketRef Market @relation(fields: [market], references: [market], onDelete: Cascade)
+
+  @@unique([market, interval])
+  @@index([status])
+  @@map("candle_sync_jobs")
+}
