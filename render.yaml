@@ -3,7 +3,6 @@ services:
     name: rmi-backtest-api
     runtime: node
     rootDir: recovered_make/backend
-    plan: free
     buildCommand: npm install && npm run db:generate && npm run build
     startCommand: npm run start
     envVars:
@@ -24,7 +23,6 @@ services:
     name: rmi-backtest-web
     runtime: static
     rootDir: recovered_make
-    plan: free
     buildCommand: npm install && npm run build
     staticPublishPath: recovered_make/dist
     envVars:
