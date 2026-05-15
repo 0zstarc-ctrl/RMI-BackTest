@@ -4,7 +4,7 @@ services:
     runtime: node
     rootDir: recovered_make/backend
     plan: free
-    buildCommand: npm install && npm run db:generate && npm run build
+    buildCommand: npm ci --include=dev && npm run db:generate && npm run build
     startCommand: npm run start
     envVars:
       - key: NODE_VERSION
@@ -17,15 +17,13 @@ services:
         sync: false
       - key: HOST
         value: 0.0.0.0
-      - key: NODE_ENV
-        value: production
 
   - type: web
     name: rmi-backtest-web
     runtime: static
     rootDir: recovered_make
-    buildCommand: npm install && npm run build
-    staticPublishPath: recovered_make/dist
+    buildCommand: npm ci --include=dev && npm run build
+    staticPublishPath: dist
     envVars:
       - key: NODE_VERSION
         value: 22.16.0
